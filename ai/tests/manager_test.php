@@ -88,9 +88,10 @@ final class manager_test extends \advanced_testcase {
         // Assert that the providers array is indexed by action name.
         $this->assertEquals($actions, array_keys($providers));
 
-        // Assert that there is only one provider for each action.
-        $this->assertCount(2, $providers[generate_text::class]);
-        $this->assertCount(2, $providers[summarise_text::class]);
+        // Assert that all installed providers are returned for each action.
+        $installedproviders = \core_plugin_manager::instance()->get_plugins_of_type('aiprovider');
+        $this->assertCount(count($installedproviders), $providers[generate_text::class]);
+        $this->assertCount(count($installedproviders), $providers[summarise_text::class]);
 
         // Disable the generate text action for the Open AI provider.
         manager::set_action_state('aiprovider_openai', generate_text::class::get_basename(), 0);

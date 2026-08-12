@@ -381,10 +381,16 @@ final class manager_test extends \advanced_testcase {
         // Assert that the providers array is indexed by action name.
         $this->assertEquals($actions, array_keys($providers));
 
-        // Assert that there is only one provider for each action.
-        $this->assertCount(2, $providers[generate_text::class]);
-        $this->assertCount(2, $providers[summarise_text::class]);
-        $this->assertCount(2, $providers[explain_text::class]);
+        // Assert that the created providers are returned for each action.
+        $generatetextids = array_column($providers[generate_text::class], 'id');
+        $this->assertContains($provider1->id, $generatetextids);
+        $this->assertContains($provider2->id, $generatetextids);
+        $summarisetextids = array_column($providers[summarise_text::class], 'id');
+        $this->assertContains($provider1->id, $summarisetextids);
+        $this->assertContains($provider2->id, $summarisetextids);
+        $explaintextids = array_column($providers[explain_text::class], 'id');
+        $this->assertContains($provider1->id, $explaintextids);
+        $this->assertContains($provider2->id, $explaintextids);
 
         // Disable the generate text action for the Open AI provider.
         $setresult = $manager->set_action_state(
@@ -397,9 +403,14 @@ final class manager_test extends \advanced_testcase {
 
         $providers = $manager->get_providers_for_actions($actions, true);
 
-        // Assert that there is no provider for the generate text action.
-        $this->assertCount(1, $providers[generate_text::class]);
-        $this->assertCount(2, $providers[summarise_text::class]);
+        // Assert that provider1 is not returned for the disabled generate text action, but provider2 is.
+        $generatetextids = array_column($providers[generate_text::class], 'id');
+        $this->assertNotContains($provider1->id, $generatetextids);
+        $this->assertContains($provider2->id, $generatetextids);
+        // Assert that both providers are still returned for the summarise text action.
+        $summarisetextids = array_column($providers[summarise_text::class], 'id');
+        $this->assertContains($provider1->id, $summarisetextids);
+        $this->assertContains($provider2->id, $summarisetextids);
 
         // Ordering the provider instances.
         // Re-enable the generate text action for the Openai provider.
@@ -415,16 +426,18 @@ final class manager_test extends \advanced_testcase {
         // Get the new providers for the actions.
         $providers = $manager->get_providers_for_actions($actions);
         // Assert whether provider2 is the first provider and provider1 is the last provider for the generate text action.
-        $this->assertEquals($providers[generate_text::class][0], $provider2);
-        $this->assertEquals($providers[generate_text::class][1], $provider1);
+        $generatetextids = array_column($providers[generate_text::class], 'id');
+        $this->assertEquals($provider2->id, $generatetextids[0]);
+        $this->assertEquals($provider1->id, $generatetextids[1]);
 
         // Move the $provider2 to the last provider for the generate text action.
         $manager->change_provider_order($provider2->id, \core\plugininfo\aiprovider::MOVE_DOWN);
         // Get the new providers for the actions.
         $providers = $manager->get_providers_for_actions($actions);
         // Assert whether provider1 is the first provider and provider2 is the last provider for the generate text action.
-        $this->assertEquals($providers[generate_text::class][0], $provider1);
-        $this->assertEquals($providers[generate_text::class][1], $provider2);
+        $generatetextids = array_column($providers[generate_text::class], 'id');
+        $this->assertEquals($provider1->id, $generatetextids[0]);
+        $this->assertEquals($provider2->id, $generatetextids[1]);
     }
 
     /**
